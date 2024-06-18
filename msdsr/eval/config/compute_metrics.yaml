@@ -1,0 +1,9 @@
+log_dir: ../train/  # where all the experiments are
+exp_name: msdsr_exp # use the same name as the training experiment
+train_exp: TODO     # training experient instance
+pred_eval:
+  first: TODO # 3D unpaired eval instance, not transposed
+  xpose: TODO # 3D unpaired eval instance, transposed
+  2d_gt: TODO # 2D paired eval instance for ground truth unpaired 2D image
+do_blur: False
+scale_factor: 2

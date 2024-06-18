@@ -1,0 +1,91 @@
+infra:
+  exp_name: msdsr_exp # create a subdirectory for each set of experiments
+  log_dir: ./ # where all the experiments are
+  comment: dev # can use this to customize for each experiment
+  seed: 1000
+  devices: 4
+  num_nodes: 1
+data:
+  train_augmentation:
+  - which: random_horiz_flip
+    params: {}
+  - which: random_vert_flip
+    params: {}
+  - which: random_crop_always_apply
+    params:
+      size: 48
+  valid_augmentation:
+  - which: random_crop_always_apply
+    params:
+      size: 48
+  rand_aug_prob: 0.5
+  direct_params:
+    train:
+      data_root: TODO # path to SRH dataset
+      studies: train
+      balance_patch_per_class: False
+    val:
+      data_root: TODO # path to SRH dataset
+      studies: val
+      balance_patch_per_class: False
+loader:
+  direct_params:
+    train:
+      batch_size: 128
+      drop_last: True
+      pin_memory: True
+      num_workers: 4
+      persistent_workers: True
+    val:
+      batch_size: 256
+      drop_last: False
+      pin_memory: True
+      num_workers: 4
+      persistent_workers: True
+model:
+  which: LatentDiffusion
+  params:
+    linear_start: 0.0015
+    linear_end: 0.0195
+    num_timesteps_cond: 1
+    log_every_t: 200
+    timesteps: 1000
+    first_stage_key: image
+    image_size: 48
+    channels: 4
+    monitor: val/loss_simple_ema
+    beta_schedule: cosine
+    loss_type: l1
+    unet_config:
+      which: UNetModel
+      params:
+        image_size: 48
+        in_channels: 3
+        out_channels: 3
+        model_channels: 224
+        attention_resolutions: [8,4,2]
+        num_res_blocks: 2
+        channel_mult: [1,2,3,4]
+        num_head_channels: 32
+    first_stage_config:
+      which: IdentityFirstStage
+      params: {}
+    conditioning_key: msdsr
+    cond_stage_config: __is_first_stage__
+    cond_stage_trainable: False
+    concat_mode: False
+    msdsr_masking_range: [28, 43]
+    scheduler_config:
+      which: LambdaWarmUpCosineScheduler2
+      params:
+        warm_up_steps: [1356, 0]
+        cycle_lengths: [13560, 100000]
+        f_start: [0., 1.0e-20]
+        f_max: [1., 1.0e-20]
+        f_min: [0., 1.0e-20]
+training:
+  num_epochs: 60
+  base_learning_rate: 1.0e-6
+  scale_lr: True
+  accumulate_grad_batches: 2
+  eval_ckpt_ep_freq: 10
